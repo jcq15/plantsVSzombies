@@ -5,6 +5,9 @@ import java.awt.event.*;
 import javax.swing.*;
 
 public class MainWindow extends JFrame{
+    GameController controller;
+    Timer clock;
+
     int width, height;      // screen
     JPanel pContainer;      // control the panel's visibility
     CardLayout layout;
@@ -19,6 +22,9 @@ public class MainWindow extends JFrame{
 
     public MainWindow(){
         super("Plants VS Zombies");
+
+        controller = new GameController(10,1);
+        clock = new Timer(50, new ListenTimer());
 
         Toolkit toolkit = Toolkit.getDefaultToolkit();
         Dimension scrnsize = toolkit.getScreenSize();
@@ -35,6 +41,7 @@ public class MainWindow extends JFrame{
             @Override
             public void actionPerformed(ActionEvent e){
                 layout.show(pContainer, "c2");
+                clock.start();
             }
         };
         btnStart.addActionListener(lsnStart);
@@ -63,8 +70,8 @@ public class MainWindow extends JFrame{
         layout.show(pContainer, "c1");
 
         setUndecorated(true);
-        //getGraphicsConfiguration().getDevice().setFullScreenWindow(this);
-        setSize(width, height);
+        //setSize(width, height);
+        setSize(500,500);
         setContentPane(pContainer);
         setVisible(true);
     }
@@ -78,6 +85,15 @@ public class MainWindow extends JFrame{
         @Override
         public void actionPerformed(ActionEvent e){
             // do something
+        }
+    }
+
+    // call gamecontroller 
+    class ListenTimer implements ActionListener{
+        @Override
+        public void actionPerformed(ActionEvent e){
+            System.out.println("call tick!");
+            controller.tick();
         }
     }
 
