@@ -25,7 +25,7 @@ abstract class PeaPlant extends Plant{
     float spd;        // one second attack how many times
     
     public PeaPlant(){
-        spd = 1;
+        spd = 1.0f;
         atk = 10;
     }
 
@@ -53,7 +53,7 @@ class FrozenShooter extends PeaPlant{
 
     @Override
     public void skill(Zombie zmb){
-        zmb.changeSpeed(0.5);
+        zmb.changeSpeed(0.5f);
     }
 }
 
@@ -76,11 +76,11 @@ abstract class SunPlant extends Plant{
 }
 
 // sunflower
-class SunFlower extens SunPlant{
+class SunFlower extends SunPlant{
     public SunFlower(){
         cost = 50;
         name = PlantList.names[3];
         sun = 25;
-        speed = 0.1;
+        speed = 0.1f;
     }
 }

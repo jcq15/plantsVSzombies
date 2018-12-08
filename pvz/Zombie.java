@@ -20,12 +20,11 @@ abstract class Zombie{
 
     // default settings
     public Zombie(){
-        spdChangeCoef = 1;
         atk = 20;
-        atkSpd = 1;
+        atkSpd = 1.0f;
         health = 100;
-        moveSpd = 0.2;
-        spdChangeCoef = 1;
+        moveSpd = 0.2f;
+        spdChangeCoef = 1.0f;
     }
 
     public void changeSpeed(float coef){
@@ -51,7 +50,7 @@ class IronBulletZombie extends Zombie{
 class OralBallZombie extends Zombie{
     public OralBallZombie(){
         atk = 10;
-        moveSpd = 0.5;
+        moveSpd = 0.5f;
         name = ZombieList.names[2];
     }
 }
@@ -60,7 +59,7 @@ class ReadPaperZombie extends Zombie{
     public ReadPaperZombie(){
         health = 50;
         atk = 50;
-        moveSpd = 0.33;
+        moveSpd = 0.33f;
         name = ZombieList.names[3];
     }
 }
