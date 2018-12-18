@@ -6,6 +6,32 @@ final class ZombieList{
     static String[] names = {"Normal Zombie", "Iron Bullet Zombie", 
                              "Oral Ball Zombie", "Read Paper Zombie"};
     private ZombieList(){}   // can't construct
+
+    //generate a zombie
+    public static Zombie[] generate(int n){
+        Zombie[] wave = new Zombie[n];
+        for(int i=0;i<n;i++){
+            int r = (int)(Math.random()*kinds);
+            switch(r){
+                case 0:
+                    wave[i] = new NormalZombie();
+                    break;
+                case 1:
+                    wave[i] = new IronBulletZombie();
+                    break;
+                case 2:
+                    wave[i] = new OralBallZombie();
+                    break;
+                case 3:
+                    wave[i] = new ReadPaperZombie();
+                    break;
+                default:
+                    System.out.println("Wrong! Wanna generate zombie number " + r);
+            }
+        }
+        System.out.println("successful generate " + n + " zombies!");
+        return wave;
+    }
 }
 
 abstract class Zombie{
@@ -17,6 +43,8 @@ abstract class Zombie{
 
     float spdChangeCoef;    //use this coefficient to change speed
     //float spdChangeTime;    //still how long
+
+    String image;           //where is the image
 
     // default settings
     public Zombie(){
