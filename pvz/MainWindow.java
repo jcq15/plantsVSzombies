@@ -25,27 +25,16 @@ public class MainWindow extends JFrame{
 
     String plantOnMouse;    // now plant on mouse
 
-    // Game control
-    int numOfZombie;
-    int frequencyOfZombie;  //how many zombies each second
-    int numOfPlant;         //how many plants now
-    Zombie[] zombies;
-    Plant[][] plants;       //the playground
+    Ground ground;          // ground
 
     void init(){
-        zombies = ZombieList.generate(numOfZombie);
-        plants = new Plant[6][9];    //6 lines
-        for(int i=0;i<6;i++){
-            for(int j=0;j<9;j++){
-                plants[i][j] = null; //null means no plant here
-            }
-        }
+        ground = new Ground(100);
     }
 
     public MainWindow(){
         super("Plants VS Zombies");
 
-        plantOnMouse = "";      // at first, no plant on mouse
+        plantOnMouse = null;      // at first, no plant on mouse
 
         clock = new Timer(50, new ListenTimer());
 
@@ -80,8 +69,8 @@ public class MainWindow extends JFrame{
             public void actionPerformed(ActionEvent e){
                 String btnLabel = ((JButton) e.getSource()).getText();
                 // if same, put return, else, get
-                if(plantOnMouse.equals(btnLabel)){
-                    plantOnMouse = "";
+                if(plantOnMouse != null && plantOnMouse.equals(btnLabel)){
+                    plantOnMouse = null;
                     // drawout from mouse
                 }else{
                     plantOnMouse = btnLabel;
@@ -135,7 +124,12 @@ public class MainWindow extends JFrame{
         }
         @Override
         public void actionPerformed(ActionEvent e){
-            
+            if(plantOnMouse != null){
+                if(ground.setPlant(plantOnMouse, index/9, index%9)){
+                    btnGround[index].setText(plantOnMouse);
+                    plantOnMouse = null;
+                }
+            }
         }
     }
 
@@ -153,26 +147,68 @@ public class MainWindow extends JFrame{
         app.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
 
-    // game control
-    public void setDifficult(int n, int f){
-        numOfZombie = n;
-        frequencyOfZombie = f;
-    }
-
     // call this each Time Clock
     public void tick(){
         // System.out.println("tick was called!");
         // plant's activity: attack/generate sun
+
         // zombie's activity: go/eat
         // playground's activity: generate zombie/sun from the sky
     }
+}
 
-    // this point is filled or not
-    public boolean isFilled(int index){
-        return (plants[index/6][index%9] == null);
+class Ground{
+    int numOfZombie;
+
+    public Ground(int n){   // how many zombies
+        numOfZombie = n;
+        zombies = new GZombie[n];
+        Zombie[] rawZombies = ZombieList.generate(numOfZombie);
+        for(int i=0;i<n;i++){
+            zombies[i] = new GZombie(rawZombies[i], 
+                            (int)(1000.0f/rawZombies[i].getAtkSpd()));
+        }
+        plants = new GPlant[6][9];    //6 lines
+        for(int i=0;i<6;i++){
+            for(int j=0;j<9;j++){
+                plants[i][j] = new GPlant(i, j, null);
+            }
+        }
     }
 
-    void generateZombie(int num){
-        System.out.println("generate zombies!");
+    class GPlant{
+        Plant plant;
+        int tickTime;       // dao ji shi
+        int row;
+        int col;
+        public GPlant(int r, int c, Plant p){
+            row = r;
+            col = c;
+            plant = p;
+        }
     }
+    class GZombie{
+        Zombie zombie;
+        int posX;              // position
+        int posY;
+        int tickTime;
+        boolean active;         // alive and inground
+        public GZombie(Zombie z, int t){
+            active = false;
+            zombie = z;
+            tickTime = t;
+        }
+    }
+    GPlant[][] plants;
+    GZombie[] zombies;
+
+    public boolean setPlant(String pltName, int r, int c){
+        if(plants[r][c].plant == null){
+            plants[r][c].plant = PlantList.generate(pltName);
+            plants[r][c].tickTime = (int)(1000.0f/plants[r][c].plant.getSpeed());
+            return true;
+        }
+        return false;
+    }
+
 }

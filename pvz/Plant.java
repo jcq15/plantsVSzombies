@@ -2,30 +2,49 @@ package pvz;
 
 //register all kinds of plants, don't instant it!
 final class PlantList{
-    static int kinds = 4;
     static String[] names = {"Pea Shooter", "Frozen Shooter", 
                              "Wall Nut", "Sun Flower"};
+    static int kinds = names.length;
     private PlantList(){}   // can't construct
+
+    // generate a plant
+    public static Plant generate(String name){
+        if(name.equals(names[0])){
+            return new PeaShooter();
+        }else if(name.equals(names[1])){
+            return new FrozenShooter();
+        }else if(name.equals(names[2])){
+            return new WallNut();
+        }else if(name.equals(names[3])){
+            return new SunFlower();
+        }else{
+            System.out.println("Wrong! Wanna generate plant " + name);
+            return null;
+        }
+    }
 }
 
 abstract class Plant{
     int health;
     int cost;
     String name;
+    float speed;
 
     //default properties
     public Plant(){
         health = 100;
+    }
+    public float getSpeed(){
+        return speed;
     }
 }
 
 // plants which like pea
 abstract class PeaPlant extends Plant{
     int atk;        // attack number 
-    float spd;        // one second attack how many times
     
     public PeaPlant(){
-        spd = 1.0f;
+        speed = 1.0f; // one second attack how many times
         atk = 10;
     }
 
@@ -64,6 +83,7 @@ abstract class WallPlant extends Plant{}
 class WallNut extends WallPlant{
     public WallNut(){
         health = 300;
+        speed = 0.000001f;   // 1e-06, so 1000/speed = 1e09 < 2147483647
         cost = 50;
         name = PlantList.names[2];
     }

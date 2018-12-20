@@ -2,9 +2,9 @@ package pvz;
 
 //register all kinds of zombies, don't instant it!
 final class ZombieList{
-    static int kinds = 4;
     static String[] names = {"Normal Zombie", "Iron Bullet Zombie", 
                              "Oral Ball Zombie", "Read Paper Zombie"};
+    static int kinds = names.length;
     private ZombieList(){}   // can't construct
 
     //generate a zombie
@@ -58,6 +58,9 @@ abstract class Zombie{
     public void changeSpeed(float coef){
         spdChangeCoef = coef;
         System.out.println("Oh no! I was frozen!");
+    }
+    public float getAtkSpd(){
+        return atkSpd;
     }
 }
 
