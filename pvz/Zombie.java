@@ -1,10 +1,33 @@
 package pvz;
 
+import java.awt.Image;
+import java.io.*;
+import javax.imageio.*;
+
 //register all kinds of zombies, don't instant it!
 final class ZombieList{
-    static String[] names = {"Normal Zombie", "Iron Bullet Zombie", 
-                             "Oral Ball Zombie", "Read Paper Zombie"};
-    static int kinds = names.length;
+    static String[] names;
+    static int kinds;
+    static Image[] images;
+
+    static{
+        names = new String[4];
+        names[0] = "Normal Zombie";
+        names[1] = "Iron Bullet Zombie"; 
+        names[2] = "Oral Ball Zombie";
+        names[3] = "Read Paper Zombie";
+        kinds = 4;
+        images = new Image[4];
+        try{
+            images[0] = ImageIO.read(new File("assets/image/OrdinaryZombie.png"));
+            images[1] = ImageIO.read(new File("assets/image/BarrelZombie.png"));
+            images[2] = ImageIO.read(new File("assets/image/FootballZombie.png"));
+            images[3] = ImageIO.read(new File("assets/image/NewspaperZombie.png"));
+        }catch(Exception e){
+            System.out.println("Image not found!");
+        }
+    }
+
     private ZombieList(){}   // can't construct
 
     //generate a zombie
@@ -40,11 +63,10 @@ abstract class Zombie{
     int health;
     float moveSpd;
     String name;
+    Image im;
 
     float spdChangeCoef;    //use this coefficient to change speed
     //float spdChangeTime;    //still how long
-
-    String image;           //where is the image
 
     // default settings
     public Zombie(){
@@ -62,12 +84,16 @@ abstract class Zombie{
     public float getAtkSpd(){
         return atkSpd;
     }
+    public Image getImg(){
+        return im;
+    }
 }
 
 // normal
 class NormalZombie extends Zombie{
     public NormalZombie(){
         name = ZombieList.names[0];
+        im = ZombieList.images[0];
     }
 }
 
@@ -75,6 +101,7 @@ class IronBulletZombie extends Zombie{
     public IronBulletZombie(){
         health = 200;
         name = ZombieList.names[1];
+        im = ZombieList.images[1];
     }
 }
 
@@ -83,6 +110,7 @@ class OralBallZombie extends Zombie{
         atk = 10;
         moveSpd = 0.5f;
         name = ZombieList.names[2];
+        im = ZombieList.images[2];
     }
 }
 
@@ -92,5 +120,6 @@ class ReadPaperZombie extends Zombie{
         atk = 50;
         moveSpd = 0.33f;
         name = ZombieList.names[3];
+        im = ZombieList.images[3];
     }
 }
