@@ -71,7 +71,7 @@ abstract class Zombie{
     // default settings
     public Zombie(){
         atk = 20;
-        atkSpd = 1.0f;
+        atkSpd = 1.0f;  // how many times one second
         health = 100;
         moveSpd = 0.2f;
         spdChangeCoef = 1.0f;
@@ -83,6 +83,9 @@ abstract class Zombie{
     }
     public float getAtkSpd(){
         return atkSpd;
+    }
+    public float getMvSpd(){
+        return moveSpd;
     }
     public Image getImg(){
         return im;

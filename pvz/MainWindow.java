@@ -21,14 +21,12 @@ public class MainWindow extends JPanel{
     ImageIcon icon;
     Image img;
 
-
     void init(){
         // temporary
         numOfZombie = 100;
         freqOfZombie = 0.2; // 5s a zombie
 
         delta = 50;
-        ground = new Ground(numOfZombie);
         plantOnMouse = null;      // at first, no plant on mouse
         clock = new Timer(50, new ListenTimer());
 
@@ -49,6 +47,8 @@ public class MainWindow extends JPanel{
         x5 = (int)(x4 + 4.0 / 16.0 * width);
         groundDelta = (int)(height / 9.0);
         headDelta = (int)(width / 16.0);
+
+        ground = new Ground();
     }
 
     public MainWindow(){
@@ -116,7 +116,7 @@ public class MainWindow extends JPanel{
     }
 
     @Override
-    public void paintComponent(Graphics g){
+    public void paintChildren(Graphics g){
         g.setColor(Color.RED);
         g.drawRect(x1, y2, x2-x1, y3-y2);
         g.drawRect(x4, 0, x5-x4, y1);
@@ -126,26 +126,35 @@ public class MainWindow extends JPanel{
         g.drawImage(PlantList.images[1], x4+headDelta, 0, headDelta, headDelta, this);
         g.drawImage(PlantList.images[2], x4+2*headDelta, 0, headDelta, headDelta, this);
         g.drawImage(PlantList.images[3], x4+3*headDelta, 0, headDelta, headDelta, this);
+
+        // draw plants
+        for(int i=0;i<6;i++){
+            for(int j=0;j<9;j++){
+                Ground.GPlant plt = ground.plants[i][j];
+                if(plt.plant != null){
+                    g.drawImage(plt.plant.getImg(), x1+j*groundDelta, 
+                                y2+i*groundDelta, groundDelta, groundDelta, this);
+                }
+            }
+        }
+        
+        // draw zombies
+        for(int i=0;i<ground.howZomNow;i++){
+            Ground.GZombie zmb = ground.zombies[i];
+            if(zmb.isActive()){
+                g.drawImage(zmb.zombie.getImg(), zmb.posX, zmb.posY, 
+                            groundDelta, groundDelta, this);
+            }
+        }
+
     }
 
-    //inner class about btnGround listener
-    class ListenGround implements ActionListener{
-        int index;      //0-53
-        public ListenGround(int n){
-            index = n;
-        }
-        @Override
-        public void actionPerformed(ActionEvent e){
-
-        }
-    }
-
-    // call gamecontroller 
+    // call timer clock
     class ListenTimer implements ActionListener{
         @Override
         public void actionPerformed(ActionEvent e){
             //System.out.println("call tick!");
-            tick();
+            ground.tick();
         }
     }
 
@@ -161,104 +170,120 @@ public class MainWindow extends JPanel{
         app.clock.start();
     }
 
-    // call this each Time Clock
-    public void tick(){
-        System.out.println("tick was called!");
+    // inner class -- game controller
+    class Ground{
+        public int tickGenZom;     // generate zombie's tick
+        public int tickGenZomRaw;
 
-        Graphics g = getGraphics();
+        public GPlant[][] plants;
+        public GZombie[] zombies;
+        public int howZomNow;       // how zombies now(1-100)
 
-        ground.tickGenZom -= delta;
-        for(int i=0;i<ground.howZomNow;i++){
-            ground.zombies[i]
+        // call this each Time Clock
+        public void tick(){
+            // generate zombie
+            tickGenZom -= delta;
+            if(tickGenZom <= 0){     // generate zombie
+                if(howZomNow < numOfZombie){
+                    int r = (int)(Math.random()*6);
+                    //g.drawImage(z.getImg(), width, y2+r*groundDelta, 
+                    //            groundDelta, groundDelta, this);
+                    zombies[howZomNow].init(width, y2+r*groundDelta, r);
+                    howZomNow ++;
+                    tickGenZom = tickGenZomRaw;   // reset
+                }else{
+                    tickGenZom = 2147483647;     // no need it
+                }
+            }
+
+            // zombie walk
+            for(int i=0;i<ground.howZomNow;i++){
+                if(ground.zombies[i].isActive()){
+                    ground.zombies[i].move();
+                }
+            }
+
+            // plant's activity: attack/generate sun
+            // zombie's activity: go/eat
+            // playground's activity: generate zombie/sun from the sky
+
+            repaint();
         }
 
-        if(ground.tickGenZom <= 0){     // generate zombie
-            if(howZomNow < 100){
-                int r = (int)(Math.random()*6);
-                Zombie z = ground.zombies[howZomNow].zombie;
-                g.drawImage(z.getImg(), width, y2+r*groundDelta, 
-                            groundDelta, groundDelta, this);
-                howZomNow ++;
-                ground.tickGenZom = ground.tickGenZomRaw;   // reset
-            }else{
-                ground.tickGenZom = 2147483647;     // no need it
+        public Ground(){   // how many zombies
+            howZomNow = 0;
+            tickGenZom = (int)(1000.0 / freqOfZombie);
+            tickGenZomRaw = tickGenZom;
+
+            zombies = new GZombie[numOfZombie];
+            Zombie[] rawZombies = ZombieList.generate(numOfZombie);
+            for(int i=0;i<numOfZombie;i++){
+                zombies[i] = new GZombie(rawZombies[i], 
+                                (int)(1000.0f / rawZombies[i].getAtkSpd()));
+            }
+            plants = new GPlant[6][9];    //6 lines
+            for(int i=0;i<6;i++){
+                for(int j=0;j<9;j++){
+                    plants[i][j] = new GPlant(i, j, null);
+                }
             }
         }
-        // plant's activity: attack/generate sun
-        // zombie's activity: go/eat
-        // playground's activity: generate zombie/sun from the sky
+
+        class GPlant{
+            Plant plant;
+            int tickTime;       // dao ji shi
+            int tickTimeRaw;
+            int row;
+            int col;
+            public GPlant(int r, int c, Plant p){
+                row = r;
+                col = c;
+                plant = p;
+            }
+        }
+        class GZombie{
+            public Zombie zombie;
+            public int posX;              // position
+            public int posY;
+            int row;
+            int col;                    // how to get column?
+            int tickTime;
+            int tickTimeRaw;
+            public boolean active;         // alive and inground
+            public GZombie(Zombie z, int t){
+                //active = false;
+                zombie = z;
+                tickTime = t;
+                tickTimeRaw = t;
+            }
+            public void init(int x, int y, int r){
+                posX = x;
+                posY = y;
+                active = true;
+                row = r;
+            }
+            public void move(){
+                // if attach plant, eat, else, go
+                posX -= (int)(zombie.getMvSpd()*groundDelta*delta / 1000.0f);
+                System.out.println(posX);
+            }
+
+            // get
+            public boolean isActive(){
+                return active;
+            }
+        }
+
+        public boolean setPlant(String pltName, int r, int c){
+            if(plants[r][c].plant == null){
+                plants[r][c].plant = PlantList.generate(pltName);
+                plants[r][c].tickTime = (int)(1000.0f/plants[r][c].plant.getSpeed());
+                plants[r][c].tickTimeRaw = plants[r][c].tickTime;
+                return true;
+            }
+            return false;
+        }
+
     }
 }
 
-class Ground{
-    public int numOfZombie;
-    public double freqOfZombie;
-
-    public int tickGenZom;     // generate zombie's tick
-    public int tickGenZomRaw;
-
-    public GPlant[][] plants;
-    public GZombie[] zombies;
-    public int howZomNow;       // how zombies now(1-100)
-
-    public Ground(int n, double f){   // how many zombies
-        numOfZombie = n;
-        freqOfZombie = f;
-        howZomNow = 0;
-        tickGenZom = (int)(1000.0 / freqOfZombie);
-        tickGenZomRaw = tickGenZom;
-
-        zombies = new GZombie[n];
-        Zombie[] rawZombies = ZombieList.generate(numOfZombie);
-        for(int i=0;i<n;i++){
-            zombies[i] = new GZombie(rawZombies[i], 
-                            (int)(1000.0f/rawZombies[i].getAtkSpd()));
-        }
-        plants = new GPlant[6][9];    //6 lines
-        for(int i=0;i<6;i++){
-            for(int j=0;j<9;j++){
-                plants[i][j] = new GPlant(i, j, null);
-            }
-        }
-    }
-
-    class GPlant{
-        Plant plant;
-        int tickTime;       // dao ji shi
-        int row;
-        int col;
-        public GPlant(int r, int c, Plant p){
-            row = r;
-            col = c;
-            plant = p;
-        }
-    }
-    class GZombie{
-        public Zombie zombie;
-        int posX;              // position
-        int posY;
-        int tickTime;
-        int tickTimeRaw;
-        //public boolean active;         // alive and inground
-        public GZombie(Zombie z, int t){
-            //active = false;
-            zombie = z;
-            tickTime = t;
-            tickTimeRaw = t;
-        }
-        public tick(){
-            // if plant, eat
-        }
-    }
-
-
-    public boolean setPlant(String pltName, int r, int c){
-        if(plants[r][c].plant == null){
-            plants[r][c].plant = PlantList.generate(pltName);
-            plants[r][c].tickTime = (int)(1000.0f/plants[r][c].plant.getSpeed());
-            return true;
-        }
-        return false;
-    }
-
-}

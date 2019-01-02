@@ -74,6 +74,9 @@ abstract class Plant{
     public Image getImg(){
         return im;
     }
+    public void tickEvent(){
+
+    }
 }
 
 // plants which like pea
