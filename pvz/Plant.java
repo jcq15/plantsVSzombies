@@ -3,11 +3,14 @@ package pvz;
 import java.awt.Image;
 import java.io.*;
 import javax.imageio.*;
+import java.util.LinkedList;
 
 //register all kinds of plants, don't instant it!
 final class PlantList{
     static String[] names;
     static Image[] images;
+    static Image[] tntImgs;
+    static Image sunImg;
     static int kinds;
     
     static{
@@ -17,12 +20,18 @@ final class PlantList{
         names[2] = "Wall Nut";
         names[3] = "Sun Flower";
         kinds = names.length;
-        images = new Image[4];
+        images = new Image[kinds];
+        tntImgs = new Image[2];
         try{
             images[0] = ImageIO.read(new File("assets/image/PeaShooter.png"));
             images[1] = ImageIO.read(new File("assets/image/IceShooter.png"));
             images[2] = ImageIO.read(new File("assets/image/Nut.png"));
             images[3] = ImageIO.read(new File("assets/image/Sunflower.png"));
+
+            tntImgs[0] = ImageIO.read(new File("assets/image/OrdinaryBullet.gif"));
+            tntImgs[1] = ImageIO.read(new File("assets/image/IceBullet.gif"));
+        
+            sunImg = ImageIO.read(new File("assets/image/Sun.png"));
         }catch(Exception e){
             System.out.println("Image not found!");
         }
@@ -57,6 +66,33 @@ final class PlantList{
     }
 }
 
+abstract class Tnt{
+    public int x;
+    public int y;
+    public Image im;
+    public double speed;
+
+    public Tnt(int x, int y){
+        speed = 1;
+        this.x = x;
+        this.y = y;
+    }
+}
+
+class OrdTnt extends Tnt{
+    public OrdTnt(int x, int y){
+        super(x, y);
+        im = PlantList.tntImgs[0];
+    }
+}
+
+class FrozenTnt extends Tnt{
+    public FrozenTnt(int x, int y){
+        super(x, y);
+        im = PlantList.tntImgs[1];
+    }
+}
+
 abstract class Plant{
     int health;
     int cost;
@@ -68,13 +104,25 @@ abstract class Plant{
     public Plant(){
         health = 100;
     }
+
+    public int hurt(int num){
+        health -= num;
+        return health;
+    }
+
     public float getSpeed(){
         return speed;
     }
     public Image getImg(){
         return im;
     }
-    public void tickEvent(){
+    public int getCost(){
+        return cost;
+    }
+    public String getName(){
+        return name;
+    }
+    public void tickEvent(int x, int y){
 
     }
 }
@@ -82,15 +130,29 @@ abstract class Plant{
 // plants which like pea
 abstract class PeaPlant extends Plant{
     int atk;        // attack number 
+    LinkedList<Tnt> tnts;
     
     public PeaPlant(){
         speed = 1.0f; // one second attack how many times
         atk = 10;
+        tnts = new LinkedList<Tnt>();
+    }
+
+    public LinkedList<Tnt> getTnt(){
+        return tnts;
+    }
+    public int getAtk(){
+        return atk;
     }
 
     //hit skill
     public void skill(Zombie zmb){
         System.out.println("I hit someone!");
+    }
+
+    @Override
+    public void tickEvent(int x, int y){
+
     }
 }
 
@@ -100,6 +162,11 @@ class PeaShooter extends PeaPlant{
         cost = 100;
         name = PlantList.names[0];
         im = PlantList.images[0];
+    }
+
+    @Override
+    public void tickEvent(int x, int y){
+        tnts.add(new OrdTnt(x, y));     // Li Yunlong, you shoot!
     }
 }
 
@@ -115,6 +182,10 @@ class FrozenShooter extends PeaPlant{
     @Override
     public void skill(Zombie zmb){
         zmb.changeSpeed(0.5f);
+    }
+    @Override
+    public void tickEvent(int x, int y){
+        tnts.add(new FrozenTnt(x, y));     // Li Yunlong, you shoot!
     }
 }
 
@@ -135,7 +206,24 @@ class WallNut extends WallPlant{
 // plants generate sun
 abstract class SunPlant extends Plant{
     int sun;        // how many sun
-    float speed;    // 1s generate how many times
+    int accumSun;   // accumulated sun now
+    boolean haveSunLogo;
+    //float speed;    // 1s generate how many times
+
+    public SunPlant(){
+        haveSunLogo = false;
+        accumSun = 0;
+    }
+
+    public boolean haveSun(){
+        return haveSunLogo;
+    }
+    public int takeSun(){
+        int temp = accumSun;
+        accumSun = 0;
+        haveSunLogo = false;
+        return temp;
+    }
 }
 
 // sunflower
@@ -146,5 +234,10 @@ class SunFlower extends SunPlant{
         sun = 25;
         speed = 0.1f;
         im = PlantList.images[3];
+    }
+    @Override
+    public void tickEvent(int x, int y){
+        haveSunLogo = true;
+        accumSun += sun;
     }
 }

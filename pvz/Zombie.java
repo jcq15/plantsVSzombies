@@ -31,42 +31,39 @@ final class ZombieList{
     private ZombieList(){}   // can't construct
 
     //generate a zombie
-    public static Zombie[] generate(int n){
-        Zombie[] wave = new Zombie[n];
-        for(int i=0;i<n;i++){
-            int r = (int)(Math.random()*kinds);
-            switch(r){
-                case 0:
-                    wave[i] = new NormalZombie();
-                    break;
-                case 1:
-                    wave[i] = new IronBulletZombie();
-                    break;
-                case 2:
-                    wave[i] = new OralBallZombie();
-                    break;
-                case 3:
-                    wave[i] = new ReadPaperZombie();
-                    break;
-                default:
-                    System.out.println("Wrong! Wanna generate zombie number " + r);
-            }
+    public static Zombie generate(){
+        Zombie z = null;
+        int r = (int)(Math.random()*kinds);
+        switch(r){
+            case 0:
+                z = new NormalZombie();
+                break;
+            case 1:
+                z = new IronBulletZombie();
+                break;
+            case 2:
+                z = new OralBallZombie();
+                break;
+            case 3:
+                z = new ReadPaperZombie();
+                break;
+            default:
+                System.out.println("Wrong! Wanna generate zombie number " + r);
         }
-        System.out.println("successful generate " + n + " zombies!");
-        return wave;
+        return z;
     }
 }
 
 abstract class Zombie{
     int atk;
-    float atkSpd;          //how many attacks per second
+    double atkSpd;          //how many attacks per second
     int health;
-    float moveSpd;
+    double moveSpd;
     String name;
     Image im;
 
-    float spdChangeCoef;    //use this coefficient to change speed
-    //float spdChangeTime;    //still how long
+    double spdChangeCoef;    //use this coefficient to change speed
+    //double spdChangeTime;    //still how long
 
     // default settings
     public Zombie(){
@@ -77,15 +74,23 @@ abstract class Zombie{
         spdChangeCoef = 1.0f;
     }
 
-    public void changeSpeed(float coef){
+    public void changeSpeed(double coef){
         spdChangeCoef = coef;
         System.out.println("Oh no! I was frozen!");
     }
-    public float getAtkSpd(){
+    public int hurt(int num){
+        health -= num;
+        return health;
+    }
+
+    public double getAtkSpd(){
         return atkSpd;
     }
-    public float getMvSpd(){
-        return moveSpd;
+    public int getAtk(){
+        return atk;
+    }
+    public double getMvSpd(){
+        return moveSpd * spdChangeCoef;
     }
     public Image getImg(){
         return im;
