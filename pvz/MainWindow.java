@@ -26,7 +26,7 @@ public class MainWindow extends JPanel{
     void init(){
         // temporary
         numOfZombie = 100;
-        freqOfZombie = 0.2; // 5s a zombie
+        freqOfZombie = 1; // 5s a zombie
 
         delta = 50;
         plantOnMouse = null;      // at first, no plant on mouse
@@ -65,41 +65,39 @@ public class MainWindow extends JPanel{
                 int xVal = e.getX();
                 int yVal = e.getY();
 
-                if(xVal >= x1 && xVal < x2 && yVal >= y2 && yVal < y3){
-                    // ground
-                    int row = (yVal - y2) / groundDelta;
-                    int col = (xVal - x1) / groundDelta;
-                    if(plantOnMouse != null){
-                        ground.setPlant(plantOnMouse, row, col);
-                        plantOnMouse = null;
-                        /*
-                        if(){
-                            //plant plant
-                            Graphics g = getGraphics();    //获取组件绘图环境
-                            g.drawImage(PlantList.images[PlantList.str2index(plantOnMouse)],
-                                        x1+col*groundDelta, y2+row*groundDelta,
-                                        groundDelta, groundDelta, MainWindow.this);
+                if(!ground.started){
+                    // start button
+                    if(yVal > y4 && xVal >= x1 && xVal <= x1+groundDelta){
+                        clock.start();
+                        ground.started = true;
+                    }
+                }else{
+                    if(xVal >= x1 && xVal < x2 && yVal >= y2 && yVal < y3){
+                        // ground
+                        int row = (yVal - y2) / groundDelta;
+                        int col = (xVal - x1) / groundDelta;
+                        if(plantOnMouse != null){
+                            ground.setPlant(plantOnMouse, row, col);
                             plantOnMouse = null;
-                        }
-                        */
-                    }else{      // plantOnMouse == null
-                        if(ground.plants[row][col].plant instanceof SunPlant){
-                            SunPlant sp = (SunPlant)(ground.plants[row][col].plant);
-                            if(sp.haveSun()){
-                                ground.sun += sp.takeSun();
+                        }else{      // plantOnMouse == null
+                            if(ground.plants[row][col].plant instanceof SunPlant){
+                                SunPlant sp = (SunPlant)(ground.plants[row][col].plant);
+                                if(sp.haveSun()){
+                                    ground.sun += sp.takeSun();
+                                }
                             }
                         }
-                    }
-                }else if(yVal < y1 && xVal >= x4 && xVal < x5){
-                    // head plant
-                    // if same, put return, else, get
-                    int index = (xVal - x4) / headDelta;
-                    if(plantOnMouse != null && plantOnMouse.equals(PlantList.names[index])){
-                        plantOnMouse = null;
-                    }else{
-                        Plant testCost = PlantList.generate(PlantList.names[index]);
-                        if(ground.sun >= testCost.getCost()){
-                            plantOnMouse = PlantList.names[index];
+                    }else if(yVal < y1 && xVal >= x4 && xVal < x5){
+                        // head plant
+                        // if same, put return, else, get
+                        int index = (xVal - x4) / headDelta;
+                        if(plantOnMouse != null && plantOnMouse.equals(PlantList.names[index])){
+                            plantOnMouse = null;
+                        }else{
+                            Plant testCost = PlantList.generate(PlantList.names[index]);
+                            if(ground.sun >= testCost.getCost()){
+                                plantOnMouse = PlantList.names[index];
+                            }
                         }
                     }
                 }
@@ -114,17 +112,6 @@ public class MainWindow extends JPanel{
             @Override
             public void mouseClicked(MouseEvent e){}
         });
-
-        /*
-        ActionListener lsnStart = new ActionListener(){
-            @Override
-            public void actionPerformed(ActionEvent e){
-                layout.show(pContainer, "c2");
-                clock.start();
-            }
-        };
-        btnStart.addActionListener(lsnStart);
-        */
     }
 
     @Override
@@ -132,6 +119,8 @@ public class MainWindow extends JPanel{
         g.setColor(Color.RED);
         g.drawRect(x1, y2, x2-x1, y3-y2);
         g.drawRect(x4, 0, x5-x4, y1);
+        g.drawRect(x1, y4, groundDelta, height-y4-10);
+        g.drawString("Start", x1, y4);
 
         // draw shop
         g.drawImage(PlantList.images[0], x4, 0, headDelta, headDelta, this);
@@ -192,14 +181,17 @@ public class MainWindow extends JPanel{
         f.setSize(app.width, app.height);
         f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         f.setVisible(true);
-        app.clock.start();
+        //app.clock.start();
     }
 
     // inner class -- game controller
     class Ground{
         int tickGenZom;     // generate zombie's tick
         int tickGenZomRaw;
+        int initSun;        // intial sun
         public int sun;
+        public boolean started;
+        public boolean lose;
 
         public GPlant[][] plants;
         //public GZombie[] zombies;
@@ -207,6 +199,10 @@ public class MainWindow extends JPanel{
 
         // call this each Time Clock
         public void tick(){
+            if(!started){       // paused / not started
+                return;
+            }
+
             // generate zombie
             tickGenZom -= delta;
             if(tickGenZom <= 0){     // generate zombie
@@ -231,6 +227,9 @@ public class MainWindow extends JPanel{
                     }
                 }else{
                     z.move();
+                    if(z.posX < x1){
+                        lose();         // lose
+                    }
                 }
             }
 
@@ -265,12 +264,14 @@ public class MainWindow extends JPanel{
             }
 
             // playground: sun from the sky
-
             repaint();
         }
 
         public Ground(){   // how many zombies
-            sun = 500;
+            initSun = 50;
+            sun = initSun;
+            started = false;
+            lose = false;
             tickGenZom = (int)(1000.0 / freqOfZombie);
             tickGenZomRaw = tickGenZom;
             zombies = new LinkedList<GZombie>();
@@ -371,6 +372,17 @@ public class MainWindow extends JPanel{
         }
         void plantDeath(GPlant p){
             p.plant = null;
+        }
+        void lose(){
+            started = false;
+            lose = true;
+            for(int i=0;i<6;i++){
+                for(int j=0;j<9;j++){
+                    plants[i][j].plant = null;
+                }
+            }
+            zombies = new LinkedList<GZombie>();
+            sun = initSun;
         }
     }
 }
