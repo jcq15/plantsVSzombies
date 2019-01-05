@@ -20,12 +20,11 @@ public class MainWindow extends JPanel{
     int delta;         // tick delta (ms)
 
     // background
-    ImageIcon icon;
-    Image img;
+    Image background;
 
     void init(){
         // temporary
-        numOfZombie = 100;
+        numOfZombie = 1;
         freqOfZombie = 1; // 5s a zombie
 
         delta = 50;
@@ -51,6 +50,8 @@ public class MainWindow extends JPanel{
         headDelta = (int)(width / 16.0);
 
         ground = new Ground();
+
+        background = (Image) new ImageIcon("assets/image/background.png").getImage();
     }
 
     public MainWindow(){
@@ -70,6 +71,8 @@ public class MainWindow extends JPanel{
                     if(yVal > y4 && xVal >= x1 && xVal <= x1+groundDelta){
                         clock.start();
                         ground.started = true;
+                        ground.lose = false;
+                        ground.win = false;
                     }
                 }else{
                     if(xVal >= x1 && xVal < x2 && yVal >= y2 && yVal < y3){
@@ -116,10 +119,14 @@ public class MainWindow extends JPanel{
 
     @Override
     public void paintChildren(Graphics g){
+        // background image
+        g.drawImage(background, 0, 0, width, height, this);
+
         g.setColor(Color.RED);
-        g.drawRect(x1, y2, x2-x1, y3-y2);
-        g.drawRect(x4, 0, x5-x4, y1);
-        g.drawRect(x1, y4, groundDelta, height-y4-10);
+        g.setFont(new Font("Arial", Font.BOLD, 30));
+        //g.drawRect(x1, y2, x2-x1, y3-y2);
+        //g.drawRect(x4, 0, x5-x4, y1);
+        //g.drawRect(x1, y4, groundDelta, height-y4-10);
         g.drawString("Start", x1, y4);
 
         // draw shop
@@ -130,6 +137,15 @@ public class MainWindow extends JPanel{
 
         // draw sun
         g.drawString(ground.sun+"", x3/2, y1/2);
+
+        // draw win or lose
+        if(ground.win){
+            g.setFont(new Font("Arial", Font.BOLD, 80));
+            g.drawString("YOU WIN!", width/2 - 100, height/2 -100);
+        }else if(ground.lose){
+            g.setFont(new Font("Arial", Font.BOLD, 80));
+            g.drawString("YOU LOSE!", width/2 - 100, height/2 -100); 
+        }
 
         // draw plants and plant appendixs
         for(int i=0;i<6;i++){
@@ -189,9 +205,11 @@ public class MainWindow extends JPanel{
         int tickGenZom;     // generate zombie's tick
         int tickGenZomRaw;
         int initSun;        // intial sun
+        int killedZom;      // judge win
         public int sun;
         public boolean started;
         public boolean lose;
+        public boolean win;
 
         public GPlant[][] plants;
         //public GZombie[] zombies;
@@ -247,7 +265,12 @@ public class MainWindow extends JPanel{
                                 GZombie z = checkDuangZombie(t);
                                 if(z != null){
                                     hurtZombie(z, plt.getAtk());
-                                    plt.skill(z.zombie);                   // skill
+                                    if(z.zombie != null){
+                                        plt.skill(z.zombie);                  // skill
+                                    }
+                                    if(killedZom == numOfZombie){
+                                        win();                      // win
+                                    }
                                     it.remove();                           // remove Tnt
                                 }
                             }
@@ -263,15 +286,16 @@ public class MainWindow extends JPanel{
                 }
             }
 
-            // playground: sun from the sky
             repaint();
         }
 
         public Ground(){   // how many zombies
             initSun = 50;
+            killedZom = 0;
             sun = initSun;
             started = false;
             lose = false;
+            win = false;
             tickGenZom = (int)(1000.0 / freqOfZombie);
             tickGenZomRaw = tickGenZom;
             zombies = new LinkedList<GZombie>();
@@ -341,6 +365,7 @@ public class MainWindow extends JPanel{
         }
         void zombieDeath(GZombie z){
             zombies.remove(z);
+            killedZom ++;
         }
         GZombie checkDuangZombie(Tnt t){
             for(GZombie z : zombies){
@@ -376,6 +401,16 @@ public class MainWindow extends JPanel{
         void lose(){
             started = false;
             lose = true;
+            win = false;
+            endGame();
+        }
+        void win(){
+            started = false;
+            lose = false;
+            win = true;
+            endGame();
+        }
+        void endGame(){     // endgame
             for(int i=0;i<6;i++){
                 for(int j=0;j<9;j++){
                     plants[i][j].plant = null;
@@ -383,6 +418,8 @@ public class MainWindow extends JPanel{
             }
             zombies = new LinkedList<GZombie>();
             sun = initSun;
+            tickGenZom = (int)(1000.0 / freqOfZombie);
+            tickGenZomRaw = tickGenZom;
         }
     }
 }
